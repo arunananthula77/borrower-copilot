@@ -4,31 +4,109 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Borrower Copilot</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;500;600&family=Source+Sans+3:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    :root {
+      --bg: #FBF9FA; --bg2: #F3EEF1; --ink: #221A20; --muted: #6E6069; --rule: #E2D9DE;
+      --accent: #4B2440; --accent-soft: #EFE3EA;
+      --display: "Newsreader", Georgia, serif; --body: "Source Sans 3", sans-serif; --mono: "IBM Plex Mono", monospace;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.5; }
+    .wrap { max-width: 44rem; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+    h1 { font-family: var(--display); font-weight: 500; font-size: 2.5rem; margin: 0 0 0.5rem; }
+    h1 em { font-style: italic; color: var(--accent); }
+    .subtitle { color: var(--muted); margin-bottom: 2rem; }
+    .card { background: #fff; border: 1px solid var(--rule); padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+    label { display: block; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 0.25rem; }
+    input, select { width: 100%; padding: 0.6rem; font-family: var(--body); font-size: 1rem; border: 1px solid var(--rule); border-radius: 4px; background: var(--bg); color: var(--ink); }
+    button { background: var(--accent); color: #fff; border: none; padding: 0.8rem 1.5rem; font-size: 1rem; font-weight: 600; border-radius: 4px; cursor: pointer; width: 100%; margin-top: 1rem; }
+    button:hover { opacity: 0.9; }
+    .results-card { background: var(--accent-soft); border-left: 4px solid var(--accent); padding: 1.25rem; margin-top: 1.5rem; border-radius: 0 8px 8px 0; }
+    .results-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
+    .res-item b { display: block; font-size: 0.8rem; color: var(--muted); text-transform: uppercase; }
+    .res-item span { font-family: var(--mono); font-size: 1.2rem; font-weight: 600; color: var(--accent); }
+    .neg-card { background: var(--bg2); border: 1px dashed var(--accent); padding: 1.25rem; margin-top: 1.5rem; font-family: var(--mono); font-size: 0.9rem; white-space: pre-wrap; }
+  </style>
 </head>
 <body>
-  <h1>Borrower Copilot</h1>
+  <div class="wrap">
+    <h1>Borrower <em>Copilot</em></h1>
+    <p class="subtitle">Self-assessment tool for loan affordability, fair rates, and borrower sanity limits.</p>
 
-  <!-- Inputs -->
-  <form id="copilotForm">
-    <label>Income: <input type="number" id="income" value="110000"></label><br>
-    <label>Employment Type: 
-      <select id="incomeType">
-        <option value="salaried">Salaried</option>
-        <option value="self_employed">Self Employed</option>
-        <option value="informal">Informal/Gig</option>
-      </select>
-    </label><br>
-    <label>Existing EMIs: <input type="number" id="existingEMIs" value="14000"></label><br>
-    <label>Requested Amount: <input type="number" id="requestedAmount" value="800000"></label><br>
-    <label>Credit Score: <input type="number" id="creditScore" value="780"></label><br>
-    <label>Recent Bounces: <input type="number" id="bouncesLast12M" value="0"></label><br>
-    <button type="button" id="calcBtn">Calculate Assessment</button>
-  </form>
+    <div class="card">
+      <form id="copilotForm">
+        <div class="grid">
+          <div>
+            <label for="income">Net Monthly Income (₹)</label>
+            <input type="number" id="income" value="110000" required>
+          </div>
+          <div>
+            <label for="incomeType">Employment Type</label>
+            <select id="incomeType">
+              <option value="salaried">Salaried</option>
+              <option value="self_employed">Self Employed</option>
+              <option value="informal">Informal / Gig Worker</option>
+            </select>
+          </div>
+          <div>
+            <label for="existingEMIs">Existing EMIs (₹)</label>
+            <input type="number" id="existingEMIs" value="14000" required>
+          </div>
+          <div>
+            <label for="requestedAmount">Requested Loan (₹)</label>
+            <input type="number" id="requestedAmount" value="800000" required>
+          </div>
+          <div>
+            <label for="creditScore">Credit Score (CIBIL)</label>
+            <input type="number" id="creditScore" value="780" placeholder="e.g. 750">
+          </div>
+          <div>
+            <label for="bouncesLast12M">Recent Loan Bounces</label>
+            <input type="number" id="bouncesLast12M" value="0">
+          </div>
+          <div style="grid-column: 1 / -1;">
+            <label for="collateralValue">Unencumbered Property Value (₹) [Optional]</label>
+            <input type="number" id="collateralValue" value="0" placeholder="Optional for LAP pivot">
+          </div>
+        </div>
+        <button type="button" id="calcBtn">Generate Assessment & Negotiation Card</button>
+      </form>
+    </div>
 
-  <!-- Output Display -->
-  <div id="results" style="margin-top: 20px;"></div>
+    <div id="outputContainer" style="display: none;">
+      <div class="results-card">
+        <h3 style="margin-top:0;">Assessment Summary</h3>
+        <p><strong>Verdict (O1):</strong> <span id="verdictOut"></span></p>
+        <p style="margin-bottom:0;"><strong>Reason:</strong> <span id="reasonOut"></span></p>
 
-  <!-- Connect logic engine via ES module -->
+        <div class="results-grid">
+          <div class="res-item">
+            <b>Lender Sanction Limit (O2)</b>
+            <span id="lenderSanctionOut"></span>
+          </div>
+          <div class="res-item">
+            <b>Borrower Safe Limit (O2)</b>
+            <span id="borrowerSafeOut"></span>
+          </div>
+          <div class="res-item">
+            <b>Fair Rate Band (O3)</b>
+            <span id="fairRateOut"></span>
+          </div>
+          <div class="res-item">
+            <b>Max Safe EMI Ceiling (O4)</b>
+            <span id="maxEmiOut"></span>
+          </div>
+        </div>
+      </div>
+
+      <h3>Negotiation Card</h3>
+      <div class="neg-card" id="negCardOut"></div>
+    </div>
+  </div>
+
   <script type="module">
     import { calculateBorrowerProfile } from './rulesEngine.js';
 
@@ -38,21 +116,36 @@
         incomeType: document.getElementById('incomeType').value,
         existingEMIs: Number(document.getElementById('existingEMIs').value),
         requestedAmount: Number(document.getElementById('requestedAmount').value),
-        creditScore: Number(document.getElementById('creditScore').value),
-        bouncesLast12M: Number(document.getElementById('bouncesLast12M').value)
+        creditScore: Number(document.getElementById('creditScore').value) || null,
+        bouncesLast12M: Number(document.getElementById('bouncesLast12M').value),
+        collateralValue: Number(document.getElementById('collateralValue').value) || 0
       };
 
       const result = calculateBorrowerProfile(input);
-      
-      document.getElementById('results').innerHTML = `
-        <h3>Assessment Results</h3>
-        <p><strong>Verdict (O1):</strong> ${result.verdict}</p>
-        <p><strong>Reason:</strong> ${result.reason}</p>
-        <p><strong>Lender Sanction Limit (O2):</strong> ₹${result.maxLenderSanction.toLocaleString('en-IN')}</p>
-        <p><strong>Safe Borrower Cap (O2):</strong> ₹${result.maxBorrowerSafe.toLocaleString('en-IN')}</p>
-        <p><strong>Fair Interest Rate (O3):</strong> ${result.fairRateBand}</p>
-        <p><strong>Max Safe EMI Ceiling (O4):</strong> ₹${result.maxSafeEMI.toLocaleString('en-IN')}/mo</p>
-      `;
+
+      document.getElementById('verdictOut').innerText = result.verdict;
+      document.getElementById('reasonOut').innerText = result.reason;
+      document.getElementById('lenderSanctionOut').innerText = result.maxLenderSanction ? '₹' + result.maxLenderSanction.toLocaleString('en-IN') : '₹0';
+      document.getElementById('borrowerSafeOut').innerText = result.maxBorrowerSafe ? '₹' + result.maxBorrowerSafe.toLocaleString('en-IN') : '₹0';
+      document.getElementById('fairRateOut').innerText = result.fairRateBand;
+      document.getElementById('maxEmiOut').innerText = result.maxSafeEMI ? '₹' + result.maxSafeEMI.toLocaleString('en-IN') + '/mo' : '₹0/mo';
+
+      const cardText = `================================================================
+                    BORROWER NEGOTIATION CARD
+================================================================
+VERDICT         : ${result.verdict}
+RECOMMENDED MAX : ₹${(result.maxBorrowerSafe || 0).toLocaleString('en-IN')}
+TARGET FAIR RATE: ${result.fairRateBand}
+SAFE EMI CEILING: ₹${(result.maxSafeEMI || 0).toLocaleString('en-IN')}/month
+
+TALKING POINTS FOR LENDER:
+• "My safe monthly debt repayment cap is ₹${(result.maxSafeEMI || 0).toLocaleString('en-IN')}."
+• "Based on market benchmarks for my income profile, my rate should not exceed ${result.fairRateBand}."
+• "Do not push total FOIR beyond safe financial ceilings."
+================================================================`;
+
+      document.getElementById('negCardOut').innerText = cardText;
+      document.getElementById('outputContainer').style.display = 'block';
     });
   </script>
 </body>
