@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Borrower Copilot</title>
+</head>
+<body>
+  <h1>Borrower Copilot</h1>
+
+  <!-- Inputs -->
+  <form id="copilotForm">
+    <label>Income: <input type="number" id="income" value="110000"></label><br>
+    <label>Employment Type: 
+      <select id="incomeType">
+        <option value="salaried">Salaried</option>
+        <option value="self_employed">Self Employed</option>
+        <option value="informal">Informal/Gig</option>
+      </select>
+    </label><br>
+    <label>Existing EMIs: <input type="number" id="existingEMIs" value="14000"></label><br>
+    <label>Requested Amount: <input type="number" id="requestedAmount" value="800000"></label><br>
+    <label>Credit Score: <input type="number" id="creditScore" value="780"></label><br>
+    <label>Recent Bounces: <input type="number" id="bouncesLast12M" value="0"></label><br>
+    <button type="button" id="calcBtn">Calculate Assessment</button>
+  </form>
+
+  <!-- Output Display -->
+  <div id="results" style="margin-top: 20px;"></div>
+
+  <!-- Connect logic engine via ES module -->
+  <script type="module">
+    import { calculateBorrowerProfile } from './rulesEngine.js';
+
+    document.getElementById('calcBtn').addEventListener('click', () => {
+      const input = {
+        income: Number(document.getElementById('income').value),
+        incomeType: document.getElementById('incomeType').value,
+        existingEMIs: Number(document.getElementById('existingEMIs').value),
+        requestedAmount: Number(document.getElementById('requestedAmount').value),
+        creditScore: Number(document.getElementById('creditScore').value),
+        bouncesLast12M: Number(document.getElementById('bouncesLast12M').value)
+      };
+
+      const result = calculateBorrowerProfile(input);
+      
+      document.getElementById('results').innerHTML = `
+        <h3>Assessment Results</h3>
+        <p><strong>Verdict (O1):</strong> ${result.verdict}</p>
+        <p><strong>Reason:</strong> ${result.reason}</p>
+        <p><strong>Lender Sanction Limit (O2):</strong> ₹${result.maxLenderSanction.toLocaleString('en-IN')}</p>
+        <p><strong>Safe Borrower Cap (O2):</strong> ₹${result.maxBorrowerSafe.toLocaleString('en-IN')}</p>
+        <p><strong>Fair Interest Rate (O3):</strong> ${result.fairRateBand}</p>
+        <p><strong>Max Safe EMI Ceiling (O4):</strong> ₹${result.maxSafeEMI.toLocaleString('en-IN')}/mo</p>
+      `;
+    });
+  </script>
+</body>
+</html>
